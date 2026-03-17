@@ -25,7 +25,7 @@ import {
   stopContainer,
 } from './container-runtime.js';
 import { OneCLI } from '@onecli-sh/sdk';
-import { validateAdditionalMounts } from './mount-security.js';
+import { loadMountAllowlist, validateAdditionalMounts } from './mount-security.js';
 import { RegisteredGroup } from './types.js';
 
 const onecli = new OneCLI({ url: ONECLI_URL });
@@ -199,6 +199,18 @@ function buildVolumeMounts(
     containerPath: '/app/src',
     readonly: false,
   });
+
+  // Global mounts from allowlist (applied to ALL containers)
+  const allowlist = loadMountAllowlist();
+  if (allowlist?.globalMounts?.length) {
+    const validatedGlobal = validateAdditionalMounts(
+      allowlist.globalMounts,
+      group.name,
+      isMain,
+      true, // global mounts can use absolute container paths
+    );
+    mounts.push(...validatedGlobal);
+  }
 
   // Additional mounts validated against external allowlist (tamper-proof from containers)
   if (group.containerConfig?.additionalMounts) {

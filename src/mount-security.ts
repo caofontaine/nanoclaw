@@ -233,6 +233,7 @@ export interface MountValidationResult {
 export function validateMount(
   mount: AdditionalMount,
   isMain: boolean,
+  allowAbsoluteContainerPath = false,
 ): MountValidationResult {
   const allowlist = loadMountAllowlist();
 
@@ -247,8 +248,16 @@ export function validateMount(
   // Derive containerPath from hostPath basename if not specified
   const containerPath = mount.containerPath || path.basename(mount.hostPath);
 
-  // Validate container path (cheap check)
-  if (!isValidContainerPath(containerPath)) {
+  // Global mounts (from the tamper-proof allowlist) can use absolute container paths
+  if (allowAbsoluteContainerPath && containerPath.startsWith('/')) {
+    if (containerPath.includes('..')) {
+      return {
+        allowed: false,
+        reason: `Invalid container path: "${containerPath}" - must not contain ".."`,
+      };
+    }
+  } else if (!isValidContainerPath(containerPath)) {
+    // Per-group mounts must be relative (prefixed with /workspace/extra/)
     return {
       allowed: false,
       reason: `Invalid container path: "${containerPath}" - must be relative, non-empty, and not contain ".."`,
@@ -337,6 +346,7 @@ export function validateAdditionalMounts(
   mounts: AdditionalMount[],
   groupName: string,
   isMain: boolean,
+  allowAbsoluteContainerPath = false,
 ): Array<{
   hostPath: string;
   containerPath: string;
@@ -349,12 +359,13 @@ export function validateAdditionalMounts(
   }> = [];
 
   for (const mount of mounts) {
-    const result = validateMount(mount, isMain);
+    const result = validateMount(mount, isMain, allowAbsoluteContainerPath);
 
     if (result.allowed) {
+      const resolvedPath = result.resolvedContainerPath!;
       validatedMounts.push({
         hostPath: result.realHostPath!,
-        containerPath: `/workspace/extra/${result.resolvedContainerPath}`,
+        containerPath: resolvedPath.startsWith('/') ? resolvedPath : `/workspace/extra/${resolvedPath}`,
         readonly: result.effectiveReadonly!,
       });
 
