@@ -26,6 +26,13 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
+# Install GitHub CLI
+RUN GH_VERSION=$(curl -s https://api.github.com/repos/cli/cli/releases/latest \
+      | grep '"tag_name"' | cut -d'"' -f4 | sed 's/v//') && \
+    ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/') && \
+    curl -fsSL "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${ARCH}.tar.gz" \
+      | tar -xz -C /usr/local/bin --strip-components=2 "gh_${GH_VERSION}_linux_${ARCH}/bin/gh"
+
 # Set Chromium path for agent-browser
 ENV AGENT_BROWSER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
@@ -57,11 +64,14 @@ RUN mkdir -p /workspace/group /workspace/global /workspace/extra /workspace/ipc/
 # Follow-up messages arrive via IPC files in /workspace/ipc/input/
 RUN printf '#!/bin/bash\nset -e\ncd /app && npx tsc --outDir /tmp/dist 2>&1 >&2\nln -s /app/node_modules /tmp/dist/node_modules\nchmod -R a-w /tmp/dist\ncat > /tmp/input.json\nnode /tmp/dist/index.js < /tmp/input.json\n' > /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
-# Set ownership to node user (non-root) for writable directories
-RUN chown -R node:node /workspace && chmod 777 /home/node
+# Fix uid 501 user for SSH auth
+RUN echo 'koyuki:x:501:20:Koyuki:/workspace/group:/bin/bash' >> /etc/passwd
 
-# Switch to non-root user (required for --dangerously-skip-permissions)
-USER node
+# Set ownership for writable directories
+RUN chown -R koyuki:staff /workspace && chmod 777 /home/node
+
+# Switch to uid 501 user (required for --dangerously-skip-permissions)
+USER koyuki
 
 # Set working directory to group workspace
 WORKDIR /workspace/group
