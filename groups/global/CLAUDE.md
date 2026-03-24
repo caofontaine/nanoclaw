@@ -40,7 +40,11 @@ Files you create are saved in `/workspace/group/`. Use this for notes, research,
 
 You also have access to:
 
-- `/workspace/projects` - the user's ~/Projects directory (read-write). Browse, read, and edit proejct files directly.
+- `/workspace/projects` - the user's ~/Projects directory (read-write). Browse, read, and edit project files directly.
+
+## GSD
+
+See `GSD.md` in this directory for instructions on running GSD (Get Shit Done) workflows in Claude Code.
 
 ## Memory
 
