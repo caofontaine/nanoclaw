@@ -25,7 +25,10 @@ import {
   stopContainer,
 } from './container-runtime.js';
 import { OneCLI } from '@onecli-sh/sdk';
-import { loadMountAllowlist, validateAdditionalMounts } from './mount-security.js';
+import {
+  loadMountAllowlist,
+  validateAdditionalMounts,
+} from './mount-security.js';
 import { RegisteredGroup } from './types.js';
 
 const onecli = new OneCLI({ url: ONECLI_URL });
@@ -103,7 +106,6 @@ function buildVolumeMounts(
     });
 
     // Global memory directory (read-only for non-main)
-    // Only directory mounts are supported, not file mounts
     const globalDir = path.join(GROUPS_DIR, 'global');
     if (fs.existsSync(globalDir)) {
       mounts.push({
@@ -111,6 +113,17 @@ function buildVolumeMounts(
         containerPath: '/workspace/global',
         readonly: true,
       });
+
+      // Overlay global CLAUDE.md as read-write so non-main groups
+      // can update shared instructions without full directory access
+      const globalClaudeMd = path.join(globalDir, 'CLAUDE.md');
+      if (fs.existsSync(globalClaudeMd)) {
+        mounts.push({
+          hostPath: globalClaudeMd,
+          containerPath: '/workspace/global/CLAUDE.md',
+          readonly: false,
+        });
+      }
     }
   }
 

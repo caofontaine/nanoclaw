@@ -41,6 +41,7 @@ Files you create are saved in `/workspace/group/`. Use this for notes, research,
 You also have access to:
 
 - `/workspace/projects` - the user's ~/Projects directory (read-write). Browse, read, and edit project files directly.
+- `/workspace/global/CLAUDE.md` (this file). Edit this file to add your learnings.
 
 ## GSD
 
@@ -63,6 +64,7 @@ Format messages based on the channel you're responding to. Check your group fold
 ### Slack channels (folder starts with `slack_`)
 
 Use Slack mrkdwn syntax. Run `/slack-formatting` for the full reference. Key rules:
+
 - `*bold*` (single asterisks)
 - `_italic_` (underscores)
 - `<https://url|link text>` for links (NOT `[text](url)`)

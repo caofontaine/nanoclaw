@@ -365,7 +365,9 @@ export function validateAdditionalMounts(
       const resolvedPath = result.resolvedContainerPath!;
       validatedMounts.push({
         hostPath: result.realHostPath!,
-        containerPath: resolvedPath.startsWith('/') ? resolvedPath : `/workspace/extra/${resolvedPath}`,
+        containerPath: resolvedPath.startsWith('/')
+          ? resolvedPath
+          : `/workspace/extra/${resolvedPath}`,
         readonly: result.effectiveReadonly!,
       });
 
